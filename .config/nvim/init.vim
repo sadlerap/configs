@@ -65,15 +65,10 @@ Plug 'ryanoasis/vim-devicons'
 " =================Languages================
 
 " Language Server Protocol
-" Plug 'autozimu/LanguageClient-neovim', {'tag': 'binary-*-x86_64-unknown-linux-musl'}
-" if has('nvim')
-"     Plug 'neovim/nvim-lspconfig'
-"     Plug 'tjdevries/lsp_extensions.nvim'
-"     Plug 'nvim-lua/completion-nvim'
-"     Plug 'nvim-lua/diagnostic-nvim'
-" endif
-
 Plug 'neovim/nvim-lspconfig'
+
+" Tree Sitter (semantic highlighting for languages)
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
 " (La)TeX
 Plug 'lervag/vimtex', { 'for': 'tex' }
@@ -300,6 +295,18 @@ for _, lsp in ipairs(servers) do
     }
   }
 end
+
+require'nvim-treesitter.configs'.setup {
+    ensure_installed = { "rust", "toml", "lua", "vim", "make", "bash" },
+    highlight = {
+        enable = true,
+        additional_vim_regex_highlighting = false,
+    },
+    indent = {
+        enabled = true,
+    },
+}
+
 EOF
 
 " Use nasm file syntax
