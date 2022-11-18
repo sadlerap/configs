@@ -85,6 +85,10 @@ Plug 'lervag/vimtex', { 'for': 'tex' }
 Plug 'rust-lang/rust.vim'
 Plug 'mattn/webapi-vim'
 
+" Debugging
+Plug 'mfussenegger/nvim-dap'
+Plug 'rcarriga/nvim-dap-ui'
+
 call plug#end()
 
 " -----------------------------------------------------------------------------
@@ -255,8 +259,7 @@ vim.opt.completeopt = "menu,menuone,noinsert"
 
 local nvim_lsp = require('lspconfig')
 
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+capabilities = require('cmp_nvim_lsp').default_capabilities()
 
 -- Use an on_attach function to only map the following keys
 -- after the language server attaches to the current buffer
@@ -299,6 +302,7 @@ nvim_lsp['rust_analyzer'].setup {
     flags = {
         debounce_text_changes = 150,
     },
+    cmd = { 'rustup', 'run', 'nightly', 'rust-analyzer' },
     settings = {
         ["rust-analyzer"] = {
             cargo = {
@@ -381,6 +385,81 @@ cmp.setup {
         documentation = cmp.config.window.bordered()
     }
 }
+
+local dap = require("dap")
+dap.adapters.lldb = {
+    type = 'executable',
+    command = '/usr/bin/lldb-vscode',
+    name = 'lldb'
+}
+
+dap.adapters.delve = {
+    type = 'server',
+    port = '${port}',
+    executable = {
+        command = '/home/sadlerap/.local/bin/dlv',
+        args = {'dap', '-l', '127.0.0.1:${port}'},
+    }
+}
+
+dap.configurations.cpp = {
+    {
+        name = 'Debug',
+        type = 'lldb',
+        request = 'launch',
+        program = function()
+            return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+        end,
+        cwd = '${workspaceFolder}',
+        stopOnEntry = false,
+        args = {},
+    },
+}
+
+dap.configurations.c = dap.configurations.cpp
+dap.configurations.rust = dap.configurations.cpp
+
+dap.configurations.go = {
+    {
+        type = "delve",
+        name = "Debug",
+        request = "launch",
+        program = "${file}"
+    },
+    {
+        type = "delve",
+        name = "Debug test",
+        request = "launch",
+        mode = "test",
+        program = "${file}"
+    },
+    {
+        type = "delve",
+        name = "Debug test (go.mod)",
+        request = "launch",
+        mode = "test",
+        program = "./${relativeFileDirname}"
+    },
+}
+
+require("dapui").setup()
+dap.listeners.after.event_initialized["dapui_config"] = function()
+    require('dapui').open()
+end
+dap.listeners.before.event_terminated["dapui_config"] = function()
+    require('dapui').close()
+end
+dap.listeners.before.event_exited["dapui_config"] = function()
+    require('dapui').close()
+end
+
+vim.keymap.set('n', '<F5>', function() dap.continue() end)
+vim.keymap.set('n', '<F10>', function() dap.step_over() end)
+vim.keymap.set('n', '<F11>', function() dap.step_into() end)
+vim.keymap.set('n', '<F12>', function() dap.step_out() end)
+vim.keymap.set('n', '<leader>b', function() dap.toggle_breakpoint() end)
+vim.keymap.set('n', '<leader>B', function() dap.set_breakpoint(vim.fn.input('Breakpoint condition: ')) end)
+vim.keymap.set('n', '<leader>dl', function() dap.run_last() end)
 
 EOF
 
