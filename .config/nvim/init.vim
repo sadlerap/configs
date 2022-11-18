@@ -111,9 +111,6 @@ set autoindent
 " Highlight cursor line
 set cursorline
 
-" Code folding
-set foldmethod=syntax
-
 " Highlight matches
 set hlsearch
 
@@ -255,8 +252,7 @@ vim.opt.completeopt = "menu,menuone,noinsert"
 
 local nvim_lsp = require('lspconfig')
 
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
 -- Use an on_attach function to only map the following keys
 -- after the language server attaches to the current buffer
@@ -279,7 +275,7 @@ local on_attach = function(client, bufnr)
     buf_set_keymap('n', '<space>wa',  '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
     buf_set_keymap('n', '<space>wr',  '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
     buf_set_keymap('n', '<space>wl',  '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
-    buf_set_keymap('n', '<space>D',   '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
+    buf_set_keymap('n', '<space>t',   '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
     buf_set_keymap('n', '<space>rn',  '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
     buf_set_keymap('n', '<space>ca',  '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
     buf_set_keymap('v', '<space>ca',  '<cmd>lua vim.lsp.buf.range_code_action()<CR>', opts)
@@ -325,13 +321,31 @@ nvim_lsp['clangd'].setup {
 }
 
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = { "rust", "toml", "lua", "vim", "make", "bash" },
+    ensure_installed = {
+        "bash",
+        "c",
+        "dockerfile",
+        "glsl",
+        "go",
+        "gomod",
+        "json",
+        "latex",
+        "lua",
+        "make",
+        "markdown",
+        "meson",
+        "python",
+        "rust",
+        "toml",
+        "vim",
+        "yaml",
+    },
     highlight = {
         enable = true,
         additional_vim_regex_highlighting = false,
     },
     indent = {
-        enabled = true,
+        enable = true,
     },
 }
 
@@ -383,6 +397,11 @@ cmp.setup {
 }
 
 EOF
+
+" Code folding
+set foldmethod=expr
+set foldexpr=nvim_treesitter#foldexpr
+" set nofoldenable
 
 " Use nasm file syntax
 au BufRead,BufNewFile *.asm set filetype=nasm
