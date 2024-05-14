@@ -67,6 +67,10 @@ Plug 'ryanoasis/vim-devicons'
 " Language Server Protocol
 Plug 'neovim/nvim-lspconfig'
 
+" Debug Adapter Protocol
+Plug 'mfussenegger/nvim-dap'
+Plug 'rcarriga/nvim-dap-ui'
+
 " Tree Sitter (semantic highlighting for languages)
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
@@ -84,6 +88,9 @@ Plug 'lervag/vimtex', { 'for': 'tex' }
 " Rust
 Plug 'rust-lang/rust.vim'
 Plug 'mattn/webapi-vim'
+
+" Go debugging
+Plug 'leoluz/nvim-dap-go'
 
 call plug#end()
 
@@ -259,13 +266,13 @@ local capabilities = require('cmp_nvim_lsp').default_capabilities()
 local on_attach = function(client, bufnr)
     local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
     local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-    
+
     -- Enable completion triggered by <c-x><c-o>
     buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-    
+
     -- Mappings.
     local opts = { noremap=true, silent=true }
-    
+
     -- See `:help vim.lsp.*` for documentation on any of the below functions
     buf_set_keymap('n', 'gD',         '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
     buf_set_keymap('n', 'gd',         '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
@@ -287,6 +294,18 @@ local on_attach = function(client, bufnr)
     buf_set_keymap('n', '<space>gq',   '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
     buf_set_keymap('v', '<space>gq',   '<cmd>lua vim.lsp.buf.range_formatting()<CR>', opts)
 
+    -- debugging keybindings
+    buf_set_keymap('n', '<space>b', "<cmd>lua require'dap'.toggle_breakpoint()<CR>", opts)
+    buf_set_keymap('n', '<space>dc', "<cmd>lua require'dap'.clear_breakpoints()<CR>", opts)
+    buf_set_keymap('n', '<space>ds', "<cmd>lua require'dap'.terminate()<CR>", opts)
+    buf_set_keymap('n', '<F5>', "<cmd>lua require'dap'.continue()<CR>", opts)
+    buf_set_keymap('n', '<F10>', "<cmd>lua require'dap'.step_over()<CR>", opts)
+    buf_set_keymap('n', '<F11>', "<cmd>lua require'dap'.step_into()<CR>", opts)
+    buf_set_keymap('n', '<F12>', "<cmd>lua require'dap'.step_out()<CR>", opts)
+
+    if vim.bo.filetype == 'go' then
+        buf_set_keymap('n', '<space>dt', "<cmd>lua require'dap-go'.debug_test()<CR>", opts)
+    end
 end
 
 nvim_lsp['rust_analyzer'].setup {
@@ -305,11 +324,22 @@ nvim_lsp['rust_analyzer'].setup {
             procMacro = {
                 enable = true,
             },
+            rustc = {
+                source = "discover",
+            },
             editor = {
                 formatOnSave = true,
             }
         }
     }
+}
+
+nvim_lsp['gopls'].setup {
+    on_attach = on_attach,
+    capabilities = capabilities,
+    flags = {
+        debounce_text_changes = 150,
+    },
 }
 
 nvim_lsp['clangd'].setup {
@@ -319,6 +349,24 @@ nvim_lsp['clangd'].setup {
         debounce_text_changes = 150,
     },
 }
+
+nvim_lsp['jedi_language_server'].setup {
+    on_attach = on_attach,
+    capabilities = capabilities,
+    root_dir = require('lspconfig.util').root_pattern('requirements.txt'),
+    flags = {
+        debounce_text_changes = 150,
+    },
+}
+
+-- nvim_lsp['ruff_lsp'].setup {
+--     on_attach = on_attach,
+--     capabilities = capabilities,
+--     root_dir = require('lspconfig.util').root_pattern('requirements.txt'),
+--     flags = {
+--         debounce_text_changes = 150,
+--     }
+-- }
 
 require'nvim-treesitter.configs'.setup {
     ensure_installed = {
@@ -330,6 +378,7 @@ require'nvim-treesitter.configs'.setup {
         "gomod",
         "json",
         "latex",
+        "llvm",
         "lua",
         "make",
         "markdown",
@@ -395,6 +444,40 @@ cmp.setup {
         documentation = cmp.config.window.bordered()
     }
 }
+
+-- Debug adapter protocol
+local dap = require('dap')
+local dapui = require('dapui')
+dap.listeners.after.event_initialized["dapui_config"] = function()
+    dapui.open()
+end
+dap.listeners.before.event_terminated["dapui_config"] = function()
+    dapui.close()
+end
+dap.listeners.before.event_exited["dapui_config"] = function()
+    dapui.close()
+end
+
+function get_arguments()
+    local args = {}
+    vim.ui.input({ prompt = "Args: " }, function(input)
+        args = vim.split(input or "", " ")
+    end)
+    return args
+end
+
+-- require('dap-go').setup(
+--     dap_configurations = {
+--         {
+--             type = "go",
+--             name = "Debug Tests (Arguments)",
+--             request = "launch",
+--             mode = "test",
+--             program = "${file}",
+--             args = get_arguments,
+--         },
+--     },
+-- )
 
 EOF
 
