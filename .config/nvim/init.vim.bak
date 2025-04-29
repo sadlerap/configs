@@ -70,6 +70,7 @@ Plug 'neovim/nvim-lspconfig'
 " Debug Adapter Protocol
 Plug 'mfussenegger/nvim-dap'
 Plug 'rcarriga/nvim-dap-ui'
+Plug 'nvim-neotest/nvim-nio'
 
 " Tree Sitter (semantic highlighting for languages)
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
@@ -308,6 +309,10 @@ local on_attach = function(client, bufnr)
     end
 end
 
+vim.diagnostic.config({
+    virtual_lines = true
+})
+
 nvim_lsp['rust_analyzer'].setup {
     on_attach = on_attach,
     capabilities = capabilities,
@@ -354,6 +359,14 @@ nvim_lsp['jedi_language_server'].setup {
     on_attach = on_attach,
     capabilities = capabilities,
     root_dir = require('lspconfig.util').root_pattern('requirements.txt'),
+    flags = {
+        debounce_text_changes = 150,
+    },
+}
+
+nvim_lsp['lua_ls'].setup {
+    on_attach = on_attach,
+    capabilities = capabilities,
     flags = {
         debounce_text_changes = 150,
     },
