@@ -30,13 +30,17 @@ return {
                 codelens = {
                     enabled = false,
                 },
+                ---@type lsp.ClientCapabilities
                 capabilities = {
                     workspace = {
                         fileOperations = {
                             didRename = true,
                             willRename = true,
-                        }
-                    }
+                        },
+                        didChangeWatchedFiles = {
+                            dynamicRegistration = true,
+                        },
+                    },
                 },
                 servers = {
                     lua_ls = {
@@ -64,7 +68,8 @@ return {
                         editor = {
                             formatOnSave = true,
                         }
-                    }
+                    },
+                    gopls = {},
                 },
             }
             return ret
@@ -101,6 +106,14 @@ return {
                     end
                 end
             end
+
+            vim.api.nvim_create_autocmd({'ColorScheme'}, {
+                callback = function ()
+                    vim.api.nvim_set_hl(0, '@lsp.mod.deprecated',         { strikethrough = true })
+                    vim.api.nvim_set_hl(0, '@lsp.typemod.function.async', { fg = 'Blue' })
+                    vim.api.nvim_set_hl(0, '@lsp.type.typeParameter',     { fg = 'Purple' })
+                end
+            })
         end
     }
 }

@@ -43,4 +43,5 @@ vim.o.completeopt = "menu,menuone,noinsert,preview"
 
 vim.cmd([[colorscheme base16-tomorrow-night]])
 
-vim.keymap.set({ 'v', 'i' }, 'jj', '<ESC>', { noremap = true })
+vim.keymap.set('i', 'jj', '<ESC>', { noremap = true })
+vim.keymap.set('c', 'w!!', 'w !sudo tee > /dev/null %')
