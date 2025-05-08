@@ -11,7 +11,7 @@ style = "Bold Italic"
 style = "Italic"
 
 [font.normal]
-family = "Iosevka Extended"
+family = "FiraCode Nerd Font Mono"
 style = "Regular"
 
 [window]
